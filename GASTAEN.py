@@ -21,37 +21,11 @@ class GASTAEN:
         return
     
     def predict(self, X):
-        predictions = []
-        WE = []
-
-        for i in range(len(self.models)):
-            model = self.models[i]
-            preds = model.predict(X)
-            print(preds)
-            we_prediction = []
-            # predictions.append(preds)
-
-            for curr_class in range(self.n_classes):
-                we_curr_class = []
-                for pred in preds:
-                    if pred == curr_class:
-                        we_curr_class.append(self.weights[i])
-                    else:
-                        we_curr_class.append(0)
-
-
-                we_prediction.append(np.array(we_curr_class))
-
-            WE.append(we_prediction)
-
-        WE = np.array(WE)
-        print(WE)
-
+        WE = self.__build_weight_encoded_matrix(X)
         sumed_we = sum(WE)
-        print(sumed_we)
-        Yx = sumed_we.transpose()
-        print(Yx)
 
+        # Get final prediction
+        Yx = sumed_we.transpose()
         y = []
 
         for yx in Yx:
@@ -69,9 +43,34 @@ class GASTAEN:
         self.models = models
         self.__generate_new_weights()
 
-    
-
     # Private
+    def __build_weight_encoded_matrix(self, X):
+        WE = []
+
+        for i in range(len(self.models)):
+            model = self.models[i]
+            prediction = model.predict(X)
+            WE_model_prediction = self.__weight_encode_model_prediction(prediction, i)
+            WE.append(WE_model_prediction)
+
+        return np.array(WE)
+
+    def __weight_encode_model_prediction(self, prediction, model_index):
+        we_prediction = []  
+
+        for curr_class in range(self.n_classes):
+            we_curr_class = []
+            for pred in prediction:
+                if pred == curr_class:
+                    we_curr_class.append(self.weights[model_index])
+                else:
+                    we_curr_class.append(0)
+
+
+            we_prediction.append(np.array(we_curr_class))
+
+        return we_prediction
+
     def __generate_new_weights(self):
         n_models = len(self.models)
 
