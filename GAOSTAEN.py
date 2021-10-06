@@ -3,6 +3,8 @@ import numpy as np, numpy.random
 from sklearn.metrics import confusion_matrix, f1_score
 from weight_change_functions import WeightChangeFunction
 from copy import deepcopy
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neural_network import MLPClassifier
 
 class GAOSTAEN:
     def __init__(self, models=[], n_classes=1, pop_size=100, learning_rate=0.3, max_epochs=1000, weight_change_function='linear'):
@@ -21,6 +23,10 @@ class GAOSTAEN:
         self.max_epochs = max_epochs
         self.n_classes = n_classes
         self.tournment_size = 3
+
+        # self.meta_model = GaussianNB()
+        self.meta_model = MLPClassifier(solver='lbfgs', alpha=0.001, 
+            hidden_layer_sizes=(15, 10), random_state=1, learning_rate='adaptive')
         return
 
     # Public
@@ -33,59 +39,75 @@ class GAOSTAEN:
         print(fits)
 
     def fit(self, X, y):
-        self.__generate_new_pop(X, y)
-        epochs = 0
+        predictions = []
 
-        while epochs < self.max_epochs:
-            print('Epoch: ' + str(epochs))
-            self.pop.sort(key = lambda p : p['fit'], reverse=True)
-            self.best_fit = deepcopy(
-                self.pop[:round(self.pop_size * self.best_fit_size)])
-            for h in range(self.pop_size):
-                element = self.pop[h]
+        for m in self.models:
+            predictions.append(m.predict(X))
 
-                # Evaluate weights
-                prediction = self.__predict_custom_weights(X, element['weights'])
-                prediction_error = self.__calc_error(y, prediction)
-                #print(prediction_error)
-                weight_change = self.__calc_weight_change(prediction_error)
+        X_predictions = np.array(predictions).transpose()
 
-                # Mutate
-                mutated_weight = self.__mutate(element['weights'], weight_change)
-                new_prediction = self.__predict_custom_weights(X, element['weights'])
-                self.pop[h] = {
-                    'weights': mutated_weight,
-                    'fit': f1_score(y, new_prediction)
-                }
+        self.meta_model.fit(X_predictions, y)
 
-            selected_pool = self.__select_pop(self.tournment_size)
+        # self.__generate_new_pop(X, y)
+        # epochs = 0
 
-            self.pop = self.best_fit + selected_pool
+        # while epochs < self.max_epochs:
+        #     print('Epoch: ' + str(epochs))
+        #     self.pop.sort(key = lambda p : p['fit'], reverse=True)
+        #     self.best_fit = deepcopy(
+        #         self.pop[:round(self.pop_size * self.best_fit_size)])
+        #     for h in range(self.pop_size):
+        #         element = self.pop[h]
 
-            if self.pop[0]['fit'] == 1: break
+        #         # Evaluate weights
+        #         prediction = self.__predict_custom_weights(X, element['weights'])
+        #         prediction_error = self.__calc_error(y, prediction)
+        #         #print(prediction_error)
+        #         weight_change = self.__calc_weight_change(prediction_error)
 
-            epochs += 1
+        #         # Mutate
+        #         mutated_weight = self.__mutate(element['weights'], weight_change)
+        #         new_prediction = self.__predict_custom_weights(X, element['weights'])
+        #         self.pop[h] = {
+        #             'weights': mutated_weight,
+        #             'fit': f1_score(y, new_prediction)
+        #         }
 
-        self.pop.sort(key = lambda p : p['fit'], reverse=True)
-        self.print_pop()
+        #     selected_pool = self.__select_pop(self.tournment_size)
 
-        best = self.pop[0]
-        print(best)
+        #     self.pop = self.best_fit + selected_pool
+
+        #     # if self.pop[0]['fit'] == 1: break
+
+        #     epochs += 1
+
+        # self.pop.sort(key = lambda p : p['fit'], reverse=True)
+        # self.print_pop()
+
+        # best = self.pop[0]
+        # print(best)
         
-        self.weights = best['weights']
+        # self.weights = best['weights']
 
         return
     
     def predict(self, X):
-        WE = self.__build_weight_encoded_matrix(X, self.weights)
-        sumed_we = sum(WE)
+        predictions = []
 
-        # Get final prediction
-        Yx = sumed_we.transpose()
-        y = []
+        for m in self.models:
+            predictions.append(m.predict(X))
 
-        for yx in Yx:
-            y.append(np.argmax(yx))
+        X_predictions = np.array(predictions).transpose()
+        y = self.meta_model.predict(X_predictions)
+        # WE = self.__build_weight_encoded_matrix(X, self.weights)
+        # sumed_we = sum(WE)
+
+        # # Get final prediction
+        # Yx = sumed_we.transpose()
+        # y = []
+
+        # for yx in Yx:
+        #     y.append(np.argmax(yx))
 
         return y
 

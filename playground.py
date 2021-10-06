@@ -8,7 +8,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.metrics import confusion_matrix, f1_score
+from sklearn.metrics import confusion_matrix, f1_score, log_loss
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.naive_bayes import GaussianNB
 
@@ -23,6 +23,8 @@ def main():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
+    X_train_1, X_train_2, y_train_1, y_train_2 = train_test_split(X_train, y_train, test_size=0.5)
+
     columns_006 = ['age', 'anaemia', 'diabetes', 'ejection_fraction',
         'high_blood_pressure', 'platelets', 'serum_creatinine', 'serum_sodium',
         'sex', 'smoking', 'time']
@@ -35,49 +37,51 @@ def main():
 
     pipeline_models = [
         make_pipeline(
-            DimensionalityReducer(columns_03),
+            # DimensionalityReducer(columns_03),
             RandomForestClassifier(
                 n_estimators=140, criterion='entropy'
         )),
         make_pipeline(
-            DimensionalityReducer(columns_03),
+            # DimensionalityReducer(columns_03),
             KNeighborsClassifier(
             n_neighbors=11, weights='distance', p=1
         )),
         make_pipeline(
-            DimensionalityReducer(columns_03),
+            # DimensionalityReducer(columns_03),
             SVC(C=12, kernel='rbf')
         ),
         make_pipeline(
-            DimensionalityReducer(columns_03),
+            # DimensionalityReducer(columns_03),
             GaussianNB()
         ),
     ]
+ 
+    preds = []
+    for i in range(len(pipeline_models)):
+        pipeline_models[i].fit(X_train_1, y_train_1)
+        # print(list(pipeline_models[i].predict(X_test)))
 
     gaostaen = GAOSTAEN(
         models=pipeline_models,
         n_classes=2,
-        weight_change_function='quadratic',
-        pop_size=50
+        weight_change_function='linear',
+        pop_size=30,
+        max_epochs=100
     )
     # [X_train, y_train, X_test, y_test] = _models['X_train'], _models['y_train'], _models['X_test'], _models['y_test']
 
-    for i in range(len(pipeline_models)):
-        pipeline_models[i].fit(X_train, y_train)
+    # print('Models')
+    # print(gaostaen.get_models())
+    # print('Weights')
+    # print(gaostaen.get_weights())
+    # print(sum(gaostaen.get_weights()))
+    # print('')
 
-
-    print('Models')
-    print(gaostaen.get_models())
-    print('Weights')
-    print(gaostaen.get_weights())
-    print(sum(gaostaen.get_weights()))
-    print('')
-
-    print('Train set:')
-    print('rf: ' + str(f1_score(y_train, pipeline_models[0].predict(X_train))))
-    print('knn: ' + str(f1_score(y_train, pipeline_models[1].predict(X_train))))
-    print('svm: ' + str(f1_score(y_train, pipeline_models[2].predict(X_train))))
-    print('nb: ' + str(f1_score(y_train, pipeline_models[3].predict(X_train))))
+    # print('Train set:')
+    # print('rf: ' + str(f1_score(y_train, pipeline_models[0].predict(X_train))))
+    # print('knn: ' + str(f1_score(y_train, pipeline_models[1].predict(X_train))))
+    # print('svm: ' + str(f1_score(y_train, pipeline_models[2].predict(X_train))))
+    # print('nb: ' + str(f1_score(y_train, pipeline_models[3].predict(X_train))))
     print('\nTest set:')
     print('rf: ' + str(f1_score(y_test, pipeline_models[0].predict(X_test))))
     print('knn: ' + str(f1_score(y_test, pipeline_models[1].predict(X_test))))
@@ -85,12 +89,16 @@ def main():
     print('nb: ' + str(f1_score(y_test, pipeline_models[3].predict(X_test))))
 
     # print(X_test.head())
-    gaostaen.fit(X_train, y_train)
+
+    print(preds)
+
+
+    gaostaen.fit(X_train_2, y_train_2)
     pred = gaostaen.predict(X_test)
-    pred2 = gaostaen.predict(X_train)
+    pred2 = gaostaen.predict(X_train_2)
 
     print("FINAL: " + str(f1_score(y_test, pred)))
-    print("FINAL train: " + str(f1_score(y_train, pred2)))
+    print("FINAL train: " + str(f1_score(y_train_2, pred2)))
     print(pred)
 
 def save_models():
