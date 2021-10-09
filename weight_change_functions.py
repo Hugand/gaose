@@ -5,7 +5,7 @@ class WeightChangeFunction:
     
     @staticmethod
     def quadratic_weight_change(error, learning_rate):
-        return (error ** (2 / learning_rate)) * learning_rate
+        return (error ** (1 / learning_rate)) * learning_rate
     
     @staticmethod
     def linear_weight_change(error, learning_rate):

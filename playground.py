@@ -1,4 +1,4 @@
-from GAOSTAEN import GAOSTAEN
+from STENS import STENS
 import pickle
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -14,7 +14,7 @@ from sklearn.naive_bayes import GaussianNB
 
 def main():
 
-    _models = pickle.load(open('test_models.sav', 'rb'))
+    #_models = pickle.load(open('test_models.sav', 'rb'))
     # models = pickle.load(open('models.sav', 'rb'))
     #data = pickle.load(open('dataset.sav', 'rb'))
     data = pd.read_csv('dataset.csv')
@@ -22,9 +22,8 @@ def main():
     y = data.DEATH_EVENT
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-
-    X_train_1, X_train_2, y_train_1, y_train_2 = train_test_split(X_train, y_train, test_size=0.5)
-
+    X_train_1, X_train_2, y_train_1, y_train_2 = train_test_split(X_train, y_train, test_size=0.33)
+    # X_train_1, X_train_2, X_train_3 = X_train[:round(len(X_train)/2)], X_train[round(len(X_train)/3):2*round(len(X_train)/3)], X_train[round(len(X_train)/3)*2:]
     columns_006 = ['age', 'anaemia', 'diabetes', 'ejection_fraction',
         'high_blood_pressure', 'platelets', 'serum_creatinine', 'serum_sodium',
         'sex', 'smoking', 'time']
@@ -37,23 +36,32 @@ def main():
 
     pipeline_models = [
         make_pipeline(
-            # DimensionalityReducer(columns_03),
+            DimensionalityReducer(columns_03),
             RandomForestClassifier(
                 n_estimators=140, criterion='entropy'
         )),
         make_pipeline(
-            # DimensionalityReducer(columns_03),
+            DimensionalityReducer(columns_03),
             KNeighborsClassifier(
             n_neighbors=11, weights='distance', p=1
         )),
         make_pipeline(
-            # DimensionalityReducer(columns_03),
+            DimensionalityReducer(columns_03),
             SVC(C=12, kernel='rbf')
         ),
         make_pipeline(
-            # DimensionalityReducer(columns_03),
+            DimensionalityReducer(columns_03),
             GaussianNB()
         ),
+        # make_pipeline(
+        #     DimensionalityReducer(columns_03),
+        #     GaussianNB()
+        # ),
+        # make_pipeline(
+        #     DimensionalityReducer(columns_03),
+        #     KNeighborsClassifier(
+        #     n_neighbors=5, weights='distance', p=2)
+        # ),
     ]
  
     preds = []
@@ -61,45 +69,35 @@ def main():
         pipeline_models[i].fit(X_train_1, y_train_1)
         # print(list(pipeline_models[i].predict(X_test)))
 
-    gaostaen = GAOSTAEN(
+    stens = STENS(
         models=pipeline_models,
         n_classes=2,
-        weight_change_function='linear',
+        weight_change_function='quadratic',
         pop_size=30,
-        max_epochs=100
+        max_epochs=300
     )
-    # [X_train, y_train, X_test, y_test] = _models['X_train'], _models['y_train'], _models['X_test'], _models['y_test']
-
-    # print('Models')
-    # print(gaostaen.get_models())
-    # print('Weights')
-    # print(gaostaen.get_weights())
-    # print(sum(gaostaen.get_weights()))
-    # print('')
 
     # print('Train set:')
     # print('rf: ' + str(f1_score(y_train, pipeline_models[0].predict(X_train))))
     # print('knn: ' + str(f1_score(y_train, pipeline_models[1].predict(X_train))))
     # print('svm: ' + str(f1_score(y_train, pipeline_models[2].predict(X_train))))
     # print('nb: ' + str(f1_score(y_train, pipeline_models[3].predict(X_train))))
+
+    print(preds)
+
+    stens.fit(X_train_2, y_train_2)
+    pred = stens.predict(X_test)
+    pred2 = stens.predict(X_train_2)
+
+    print("FINAL train: " + str(f1_score(y_train_2, pred2)))
+    print("FINAL: " + str(f1_score(y_test, pred)))
     print('\nTest set:')
     print('rf: ' + str(f1_score(y_test, pipeline_models[0].predict(X_test))))
     print('knn: ' + str(f1_score(y_test, pipeline_models[1].predict(X_test))))
     print('svm: ' + str(f1_score(y_test, pipeline_models[2].predict(X_test))))
     print('nb: ' + str(f1_score(y_test, pipeline_models[3].predict(X_test))))
-
-    # print(X_test.head())
-
-    print(preds)
-
-
-    gaostaen.fit(X_train_2, y_train_2)
-    pred = gaostaen.predict(X_test)
-    pred2 = gaostaen.predict(X_train_2)
-
-    print("FINAL: " + str(f1_score(y_test, pred)))
-    print("FINAL train: " + str(f1_score(y_train_2, pred2)))
-    print(pred)
+    # print(list(pred))
+    # print(confusion_matrix(y_test, pred))
 
 def save_models():
     knn = make_pipeline(
@@ -139,7 +137,7 @@ class DimensionalityReducer(BaseEstimator, TransformerMixin):
         self.columns = columns
 
     def transform(self, X, **transform_params):
-        trans = X
+        trans = X[self.columns]
         return trans
 
     def fit(self, X, y=None, **fit_params):
