@@ -1,4 +1,5 @@
 from random import random, uniform
+from typing import final
 import numpy as np, numpy.random
 from sklearn.metrics import confusion_matrix, f1_score
 from weight_change_functions import WeightChangeFunction
@@ -9,15 +10,23 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
+from math import floor
 
 class STENS:
-    def __init__(self, models=[], n_classes=1, pop_size=100, learning_rate=0.8, max_epochs=1000, weight_change_function='linear'):
-        self.weights = []
+    def __init__(self, X, y, models=[], n_classes=1, pop_size=100, learning_rate=0.4, max_epochs=1000, weight_change_function='linear'):
         self.learning_rate = learning_rate
         self.set_models(models)
+        # self.weights = self.__generate_new_weights()
         self.n_classes = n_classes
         self.max_epochs = max_epochs
         self.weight_change_function = weight_change_function
+
+        self.weights = []
+
+        for m in self.models:
+            self.weights.append(1 + f1_score(y, m.predict(X)))
+
+        
 
         self.meta_model_gnb = GaussianNB()
         self.meta_model_mlp = MLPClassifier(solver='lbfgs', alpha=0.001, 
@@ -25,7 +34,6 @@ class STENS:
         return
 
     # Public
-
     def print_pop(self):
         fits = []
         for p in self.pop:
@@ -34,65 +42,13 @@ class STENS:
         print(fits)
 
     def fit(self, X, y):
-        epochs = 0
-
-        # Make initial prediction
-        WL_predictions = []
-        for m in self.models:
-            WL_predictions.append(m.predict(X))
-
-        transposed_WL_predictions = np.array(WL_predictions).transpose()
-
-        weights = self.__generate_new_weights()
-        curr_fit = f1_score(y, self.__fit_predict(weights, transposed_WL_predictions))
-        N_neighbors = 100
+        transposed_WL_predictions = self.__make_wl_prediction(X)
 
         # Optimize weights
-        while epochs < self.max_epochs:
-            error = 1 - curr_fit
-
-            neighbor_distance = self.__calc_weight_change(error)
-            neighbors = []
-            
-            for i in range(N_neighbors):
-                weight_change = neighbor_distance * [1, -1][round(random())]
-                chosen_weight = round(uniform(0, len(weights)-1))
-
-                new_weights = deepcopy(weights)
-                new_weights[chosen_weight] = new_weights[chosen_weight] + weight_change
-                if new_weights[chosen_weight] < 0.0: new_weights[chosen_weight] = 0.0
-                elif new_weights[chosen_weight] > 1.0: new_weights[chosen_weight] = 1.0
-
-                new_pred = self.__fit_predict(new_weights, transposed_WL_predictions)
-                neighbors.append({
-                    'weights': new_weights,
-                    'fit': f1_score(y, new_pred),
-                    'wc': weight_change
-                })
-
-            neighbors.sort(key=lambda x: x['fit'], reverse=True)
-            st = ''
-            for n in neighbors:
-                st += '   ' + str(n['weights']) + ' - ' + str(n['wc'])
-            
-            if neighbors[0]['fit'] >= curr_fit:
-                weights = neighbors[0]['weights']
-                curr_fit = neighbors[0]['fit']
-
-            print(str(weights) + ' - ' + str(curr_fit))
-
-            epochs += 1
-
-        self.weights = weights
+        self.weights = self.__optimize(transposed_WL_predictions, y)
     
     def predict(self, X):
-        predictions = []
-         # Make initial prediction
-        WL_predictions = []
-        for m in self.models:
-            WL_predictions.append(m.predict(X))
-
-        transposed_WL_predictions = np.array(WL_predictions).transpose()
+        transposed_WL_predictions = self.__make_wl_prediction(X)
 
         return self.__fit_predict(self.weights, transposed_WL_predictions)
 
@@ -104,24 +60,7 @@ class STENS:
 
     # Private
     def __fit_predict(self, weights, transposed_WL_predictions):
-        # Create Weighted Weak Learner's predictions
-        wwl = []
-        for p in transposed_WL_predictions:
-            prediction_batch = []
-            for i in range(len(p)):
-                prediction_batch.append(weights[i] * p[i])
-
-            wwl.append(prediction_batch)
-
-        final_prediction = sum(np.array(wwl).transpose())
-
-        for i in range(len(final_prediction)):
-            total_sum = sum(transposed_WL_predictions[i])
-            if total_sum == 0: final_prediction[i] = 0.0
-            else: final_prediction[i] = round(final_prediction[i] / total_sum)
-
-
-        return final_prediction
+        return self.__mean_prediction(transposed_WL_predictions, weights)
 
     def __get_wl_f1scores(self, y_true, y_pred):
         wl_f1scores = []
@@ -152,3 +91,72 @@ class STENS:
         }
 
         return (wc_function[self.weight_change_function])(error, self.learning_rate)
+
+    def __make_wl_prediction(self, X):
+        WL_predictions = []
+        for m in self.models:
+            WL_predictions.append(m.predict(X))
+
+        return np.array(WL_predictions).transpose()
+
+    def __optimize(self, transposed_WL_predictions, y):
+        weights = self.weights
+        curr_fit = f1_score(y, self.__fit_predict(weights, transposed_WL_predictions))
+        N_neighbors = 100
+        epochs = 0
+
+        while epochs < self.max_epochs:
+            error = 1 - curr_fit
+
+            neighbor_distance = self.__calc_weight_change(error)
+            neighbors = []
+            
+            for i in range(N_neighbors):
+                weight_change = neighbor_distance * [1, -1][round(random())]
+                chosen_weight = round(uniform(0, len(weights)-1))
+
+                new_weights = deepcopy(weights)
+                new_weights[chosen_weight] = new_weights[chosen_weight] + weight_change
+                if new_weights[chosen_weight] < 0.0: new_weights[chosen_weight] = 0.0
+                elif new_weights[chosen_weight] > 1.0: new_weights[chosen_weight] = 1.0
+
+                new_pred = self.__fit_predict(new_weights, transposed_WL_predictions)
+                neighbors.append({
+                    'weights': new_weights,
+                    'fit': f1_score(y, new_pred),
+                    'wc': weight_change
+                })
+
+            neighbors.sort(key=lambda x: x['fit'], reverse=True)
+            
+            if neighbors[0]['fit'] >= curr_fit:
+                weights = neighbors[0]['weights']
+                curr_fit = neighbors[0]['fit']
+
+            print('[' + str(epochs) + '] => ' + str(weights) + ' - ' + str(curr_fit))
+
+            epochs += 1
+
+        return weights
+
+    def __mean_prediction(self, transposed_WL_predictions, weights):
+        # Create Weighted Weak Learner's predictions
+        wwp = []
+        for p in transposed_WL_predictions:
+            prediction_batch = []
+            for i in range(len(p)):
+                prediction_batch.append(weights[i] * (p[i] + 1))
+
+            wwp.append(prediction_batch)
+
+        t_wwp = np.array(wwp).transpose()
+        final_prediction = sum(t_wwp)
+        weights_sum = sum(weights)
+
+        for i in range(len(final_prediction)):
+            final_prediction[i] = int(floor(final_prediction[i] / weights_sum)) - 1
+
+        return final_prediction
+
+    def __floor_argmax_prediction(self):
+        return

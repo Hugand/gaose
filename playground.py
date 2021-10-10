@@ -8,7 +8,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.metrics import confusion_matrix, f1_score, log_loss
+from sklearn.metrics import confusion_matrix, f1_score, log_loss, classification_report
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.naive_bayes import GaussianNB
 
@@ -70,9 +70,10 @@ def main():
         # print(list(pipeline_models[i].predict(X_test)))
 
     stens = STENS(
+        X_test, y_test,
         models=pipeline_models,
         n_classes=2,
-        weight_change_function='quadratic',
+        weight_change_function='linear',
         pop_size=30,
         max_epochs=300
     )
@@ -91,6 +92,8 @@ def main():
 
     print("FINAL train: " + str(f1_score(y_train_2, pred2)))
     print("FINAL: " + str(f1_score(y_test, pred)))
+    
+    
     print('\nTest set:')
     print('rf: ' + str(f1_score(y_test, pipeline_models[0].predict(X_test))))
     print('knn: ' + str(f1_score(y_test, pipeline_models[1].predict(X_test))))
