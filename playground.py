@@ -75,7 +75,7 @@ def main():
         n_classes=2,
         weight_change_function='linear',
         pop_size=30,
-        max_epochs=300
+        max_epochs=100
     )
 
     # print('Train set:')
