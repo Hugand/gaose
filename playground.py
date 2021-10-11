@@ -8,7 +8,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.metrics import confusion_matrix, f1_score, log_loss, classification_report
+from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, log_loss, classification_report
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.naive_bayes import GaussianNB
 
@@ -22,7 +22,7 @@ def main():
     y = data.DEATH_EVENT
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-    X_train_1, X_train_2, y_train_1, y_train_2 = train_test_split(X_train, y_train, test_size=0.33)
+    # , X_train_2, y_train_1, y_train_2 = train_test_split(X_train, y_train, test_size=0.33)
     # X_train_1, X_train_2, X_train_3 = X_train[:round(len(X_train)/2)], X_train[round(len(X_train)/3):2*round(len(X_train)/3)], X_train[round(len(X_train)/3)*2:]
     columns_006 = ['age', 'anaemia', 'diabetes', 'ejection_fraction',
         'high_blood_pressure', 'platelets', 'serum_creatinine', 'serum_sodium',
@@ -37,9 +37,7 @@ def main():
     pipeline_models = [
         make_pipeline(
             DimensionalityReducer(columns_03),
-            RandomForestClassifier(
-                n_estimators=140, criterion='entropy'
-        )),
+            DecisionTreeClassifier(criterion='entropy')),
         make_pipeline(
             DimensionalityReducer(columns_03),
             KNeighborsClassifier(
@@ -64,41 +62,32 @@ def main():
         # ),
     ]
  
-    preds = []
-    for i in range(len(pipeline_models)):
-        pipeline_models[i].fit(X_train_1, y_train_1)
-        # print(list(pipeline_models[i].predict(X_test)))
-
     stens = STENS(
         X_test, y_test,
         models=pipeline_models,
         n_classes=2,
         weight_change_function='linear',
         pop_size=30,
-        max_epochs=100
+        max_epochs=300
     )
 
-    # print('Train set:')
-    # print('rf: ' + str(f1_score(y_train, pipeline_models[0].predict(X_train))))
-    # print('knn: ' + str(f1_score(y_train, pipeline_models[1].predict(X_train))))
-    # print('svm: ' + str(f1_score(y_train, pipeline_models[2].predict(X_train))))
-    # print('nb: ' + str(f1_score(y_train, pipeline_models[3].predict(X_train))))
+    # print(preds)
 
-    print(preds)
+    stens.fit(X_train, y_train)
 
-    stens.fit(X_train_2, y_train_2)
+    stens.print_weak_learners_performance(X_test, y_test)
     pred = stens.predict(X_test)
-    pred2 = stens.predict(X_train_2)
+    pred2 = stens.predict(X_train)
 
-    print("FINAL train: " + str(f1_score(y_train_2, pred2)))
-    print("FINAL: " + str(f1_score(y_test, pred)))
+    print("FINAL train: " + str(accuracy_score(y_train, pred2)))
+    print("FINAL: " + str(accuracy_score(y_test, pred)))
     
     
-    print('\nTest set:')
-    print('rf: ' + str(f1_score(y_test, pipeline_models[0].predict(X_test))))
-    print('knn: ' + str(f1_score(y_test, pipeline_models[1].predict(X_test))))
-    print('svm: ' + str(f1_score(y_test, pipeline_models[2].predict(X_test))))
-    print('nb: ' + str(f1_score(y_test, pipeline_models[3].predict(X_test))))
+    # print('\nTest set:')
+    # print('rf: ' + str(f1_score(y_test, pipeline_models[0].predict(X_test))))
+    # print('knn: ' + str(f1_score(y_test, pipeline_models[1].predict(X_test))))
+    # print('svm: ' + str(f1_score(y_test, pipeline_models[2].predict(X_test))))
+    # print('nb: ' + str(f1_score(y_test, pipeline_models[3].predict(X_test))))
     # print(list(pred))
     # print(confusion_matrix(y_test, pred))
 
