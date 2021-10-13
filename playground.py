@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
@@ -13,10 +13,10 @@ from sklearn.naive_bayes import GaussianNB
 from copy import deepcopy
 
 def main():
-    data = pd.read_csv('dataset.csv')
-    # data = pd.read_csv('../datasets/winequality-red.csv', delimiter=';')
-    y_label = 'DEATH_EVENT'
-    # y_label = 'quality'
+    # data = pd.read_csv('dataset.csv')
+    data = pd.read_csv('../datasets/winequality-red.csv', delimiter=';')
+    # y_label = 'DEATH_EVENT'
+    y_label = 'quality'
 
     X = data.drop(columns=y_label)
     y = data[y_label]
@@ -42,22 +42,34 @@ def main():
         ),
         make_pipeline(
             StandardScaler(),
-            GaussianNB()
+            SVC(C=6, kernel='rbf')
+        ),
+        make_pipeline(
+            MinMaxScaler(),
+            SVC()
         ),
         make_pipeline(
             StandardScaler(),
             KNeighborsClassifier(
             n_neighbors=5, weights='distance', p=2)
         ),
+        make_pipeline(
+            StandardScaler(),
+            KNeighborsClassifier(
+            n_neighbors=3, weights='distance', p=1)
+        ),
+        make_pipeline(
+            StandardScaler(),
+            DecisionTreeClassifier(criterion='gini', max_leaf_nodes=20)),
     ]
  
     stens = STENS(
         models=pipeline_models,
-        n_classes=2,
-        pop_size=30,
-        max_epochs=300,
-        pInstances=0.6,
-        pFeatures=0.5,
+        n_classes=10,
+        pop_size=40,
+        max_epochs=3000,
+        pInstances=0.7,
+        pFeatures=0.4,
     )
 
     stens.fit(X_train, y_train)

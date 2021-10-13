@@ -19,6 +19,9 @@ class STENS:
         self.pInstances = pInstances
         self.pFeatures = pFeatures
         self.selected_features = []
+        self.pop_size = pop_size
+        self.max_epochs = max_epochs
+        self.ga_optimizer = GAOptimizer(len(models), pop_size=self.pop_size, n_generations=self.max_epochs)
 
     # Public
     def print_pop(self):
@@ -60,9 +63,7 @@ class STENS:
             wl_predictions.append(self.models[i].predict(X_mm[self.selected_features[i]]) + 1)
 
         # Optimize weights
-        ga_optimizer = GAOptimizer(
-            n_models, pop_size=40, n_generations=3000)
-        self.weights = ga_optimizer.optimize(wl_predictions, y_mm, self.meta_classifier)
+        self.weights = self.ga_optimizer.optimize(wl_predictions, y_mm, self.meta_classifier)
 
     def print_weak_learners_performance(self, X, y):
         scores = []
