@@ -55,9 +55,8 @@ class STENS:
 
         # Optimize weights
         ga_optimizer = GAOptimizer(
-            n_models, self.meta_model_mlp, wl_predictions, y_mm, # wl_valid_predictions, y_valid,
-            pop_size=30, n_generations=3000)
-        self.weights = ga_optimizer.optimize()
+            n_models, pop_size=30, n_generations=3000)
+        self.weights = ga_optimizer.optimize(wl_predictions, y_mm, self.meta_model_mlp)
 
     def print_weak_learners_performance(self, X, y):
         scores = []
