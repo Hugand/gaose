@@ -19,10 +19,6 @@ class GAOptimizer:
         self.n_generations = n_generations
         self.crossover_type = crossover_type
 
-        # self.meta_model = meta_model
-        # self.X_train = X_train
-        # self.y_train = y_train
-
     def __select(self, mating_pool):
         return self.__tournment_selection(mating_pool)
 
@@ -84,7 +80,7 @@ class GAOptimizer:
         self.meta_classifier = meta_classifier
         self.X_train = X_train
         self.y_train = y_train
-        self.population = self.__generate_population()
+        self.population = self.__generate_population(self.pop_size)
 
         for g in range(self.n_generations):
             mating_pool = []
@@ -99,8 +95,10 @@ class GAOptimizer:
                         self.population[p], self.population[random_chromossome_pos])
                     mating_pool += offsprings
 
+            if g % 400 == 0:
+                mating_pool = self.__population_injection(mating_pool, 20)
+
             self.population = self.__select(mating_pool)
-                
             self.population.sort(key=lambda x: x['fit'], reverse=True)
 
             print(g)
@@ -108,9 +106,9 @@ class GAOptimizer:
             
         return self.population[0]['weights']
 
-    def __generate_population(self):
+    def __generate_population(self, pop_size):
         new_population = []
-        for i in range(self.pop_size):
+        for i in range(pop_size):
             new_weights = self.__generate_weights(self.n_weights)
             new_population.append({
                 'weights': new_weights,
@@ -142,5 +140,7 @@ class GAOptimizer:
 
         return normalized_weights
 
-    def population_injection(self):
-        return
+    def __population_injection(self, mating_pool, new_pop_batch_size):
+        new_population_batch = self.__generate_population(new_pop_batch_size)
+        
+        return mating_pool + new_population_batch

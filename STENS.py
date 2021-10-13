@@ -3,17 +3,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from optimizers import hill_climbing_optimizer
 from ga_optimizer import GAOptimizer
-
-class MetaClassifier:
-    def __init__(self, n_classes, n_models):
-        self.n_classes = n_classes
-        self.total_predictions_sum = n_classes * n_models
-
-    def predict(self, X, weights):
-        weighted_prediction = np.array(weights) * np.array(X).transpose()
-        predictions = sum(weighted_prediction.transpose()) * 1/sum(weights)
-
-        return np.round(predictions).transpose() - 1
+from meta_classifier import MetaClassifier
 
 class STENS:
     def __init__(self, X, y, models=[], n_classes=1, pop_size=100, learning_rate=0.4, max_epochs=1000, weight_change_function='linear'):
@@ -22,7 +12,7 @@ class STENS:
         self.n_classes = n_classes
         self.max_epochs = max_epochs
         self.weights = None
-        self.meta_model_mlp = MetaClassifier(n_classes, len(self.models))
+        self.meta_classifier = MetaClassifier(n_classes, len(self.models))
 
     # Public
     def print_pop(self):
@@ -55,8 +45,8 @@ class STENS:
 
         # Optimize weights
         ga_optimizer = GAOptimizer(
-            n_models, pop_size=30, n_generations=3000)
-        self.weights = ga_optimizer.optimize(wl_predictions, y_mm, self.meta_model_mlp)
+            n_models, pop_size=40, n_generations=3000)
+        self.weights = ga_optimizer.optimize(wl_predictions, y_mm, self.meta_classifier)
 
     def print_weak_learners_performance(self, X, y):
         scores = []
@@ -71,7 +61,7 @@ class STENS:
         for i in range(len(self.models)):
             wl_predictions.append(self.models[i].predict(X) + 1)
 
-        return self.meta_model_mlp.predict(wl_predictions, self.weights)
+        return self.meta_classifier.predict(wl_predictions, self.weights)
 
     def get_models(self):
         return self.models

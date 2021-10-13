@@ -13,10 +13,10 @@ from sklearn.naive_bayes import GaussianNB
 from copy import deepcopy
 
 def main():
-    data = pd.read_csv('dataset.csv')
-    # data = pd.read_csv('../datasets/winequality-red.csv', delimiter=';')
-    y_label = 'DEATH_EVENT'
-    # y_label = 'quality'
+    # data = pd.read_csv('dataset.csv')
+    data = pd.read_csv('../datasets/winequality-red.csv', delimiter=';')
+    # y_label = 'DEATH_EVENT'
+    y_label = 'quality'
 
     X = data.drop(columns=y_label)
     y = data[y_label]
@@ -54,7 +54,7 @@ def main():
     stens = STENS(
         X_test, y_test,
         models=pipeline_models,
-        n_classes=2,
+        n_classes=10,
         weight_change_function='quadratic',
         pop_size=30,
         max_epochs=300
@@ -67,9 +67,12 @@ def main():
     pred_test = stens.predict(X_test)
     pred_train = stens.predict(X_train)
 
+    print(pred_test)
+    print(y_test)
+
     print("FINAL train: " + str(accuracy_score(y_train, pred_train)))
     print("FINAL test: " + str(accuracy_score(y_test, pred_test)))
-    print("FINAL test f1: " + str(f1_score(y_test, pred_test)))
+    # print("FINAL test f1: " + str(f1_score(y_test, pred_test)))
     print(confusion_matrix(y_test, pred_test))
     
     print('\nTest set:')
