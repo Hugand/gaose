@@ -5,8 +5,11 @@ from scipy.sparse.construct import rand
 from sklearn.metrics import accuracy_score
 
 class GAOptimizer:
-    def __init__(self, n_weights, meta_model, X_train, y_train, X_valid, y_valid,
-        n_generations=1000, pop_size=30, mutation_prob=0.1, crossover_prob=0.7, selection_type='tournment'):
+    def __init__(self, n_weights,
+        n_generations=1000, pop_size=30,
+        mutation_prob=0.1,
+        crossover_prob=0.7, crossover_type='1pt',
+        selection_type='tournment'):
         self.pop_size = pop_size
         self.mutation_prob = mutation_prob
         self.crossover_prob = crossover_prob
@@ -14,18 +17,12 @@ class GAOptimizer:
         self.n_weights = n_weights
         self.population = []
         self.n_generations = n_generations
-        self.meta_model = meta_model
+        self.crossover_type = crossover_type
 
-        self.X_train = X_train
-        self.y_train = y_train
-        self.X_valid = X_valid
-        self.y_valid = y_valid
+    def __select(self, mating_pool):
+        return self.__tournment_selection(mating_pool)
 
-
-    def select(self, mating_pool):
-        return self.tournment_selection(mating_pool)
-
-    def tournment_selection(self, mating_pool):
+    def __tournment_selection(self, mating_pool):
         selected = []
 
         for i in range(self.pop_size):
@@ -39,8 +36,8 @@ class GAOptimizer:
 
         return selected
     
-    def mutate(self, chromossome):
-        weight_change = uniform(0.3, 2.0) #neighbor_distance
+    def __mutate(self, chromossome):
+        weight_change = uniform(0.3, 2.0) * [1, -1][round(random())]
         chosen_weight = round(uniform(0, len(chromossome['weights'])-1))
 
         new_weights = deepcopy(chromossome['weights'])
@@ -52,7 +49,15 @@ class GAOptimizer:
             'fit': self.__evaluate_chromossome(normalized_weights)
         }
 
-    def crossover(self, chromossome1, chromossome2):
+    def __crossover(self, chromossome1, chromossome2):
+        crossover = {
+            '1pt': self.__1pt_crossover,
+            'uniform': self.__uniform_crossover,
+        }
+
+        return (crossover[self.crossover_type])(chromossome1, chromossome2)
+
+    def __1pt_crossover(self, chromossome1, chromossome2):
         weights_len = len(chromossome1['weights'])
         random_pos = round(uniform(0, weights_len-1))
         chromossome1_weights, chromossome2_weights = chromossome1['weights'], chromossome2['weights']
@@ -68,24 +73,32 @@ class GAOptimizer:
 
         return offspring1, offspring2
 
-    def optimize(self):
-        self.population = self.__generate_population()
+    def __uniform_crossover(self, chromossome1, chromossome2):
+        return
+
+    def optimize(self, X_train, y_train, meta_classifier):
+        self.meta_classifier = meta_classifier
+        self.X_train = X_train
+        self.y_train = y_train
+        self.population = self.__generate_population(self.pop_size)
 
         for g in range(self.n_generations):
             mating_pool = []
             for p in range(self.pop_size):
                 if random() <= self.mutation_prob:
-                    mutant = self.mutate(self.population[p])
+                    mutant = self.__mutate(self.population[p])
                     mating_pool.append(mutant)
 
                 if random() <= self.crossover_prob:
                     random_chromossome_pos = round(uniform(0, self.pop_size-1))
-                    offsprings = self.crossover(
+                    offsprings = self.__crossover(
                         self.population[p], self.population[random_chromossome_pos])
                     mating_pool += offsprings
 
-            self.population = self.select(mating_pool)
-                
+            if g % 400 == 0:
+                mating_pool = self.__population_injection(mating_pool, 20)
+
+            self.population = self.__select(mating_pool)
             self.population.sort(key=lambda x: x['fit'], reverse=True)
 
             print(g)
@@ -93,9 +106,9 @@ class GAOptimizer:
             
         return self.population[0]['weights']
 
-    def __generate_population(self):
+    def __generate_population(self, pop_size):
         new_population = []
-        for i in range(self.pop_size):
+        for i in range(pop_size):
             new_weights = self.__generate_weights(self.n_weights)
             new_population.append({
                 'weights': new_weights,
@@ -105,14 +118,9 @@ class GAOptimizer:
         return new_population
 
     def __evaluate_chromossome(self, weights):
-        meta_model_cpy = deepcopy(self.meta_model)
-        weighted_X_train = np.array(self.X_train).transpose() * np.array(weights)
-        weighted_X_valid = np.array(self.X_valid).transpose() * np.array(weights)
-        meta_model_cpy.fit(weighted_X_train, self.y_train)
+        y_pred = self.meta_classifier.predict(self.X_train, weights)
 
-        y_pred = meta_model_cpy.predict(weighted_X_valid)
-
-        return accuracy_score(self.y_valid, y_pred)
+        return accuracy_score(self.y_train, y_pred)
 
     def __generate_weights(self, n_weights):
         weights = []
@@ -131,3 +139,8 @@ class GAOptimizer:
             normalized_weights.append(w / total)
 
         return normalized_weights
+
+    def __population_injection(self, mating_pool, new_pop_batch_size):
+        new_population_batch = self.__generate_population(new_pop_batch_size)
+        
+        return mating_pool + new_population_batch

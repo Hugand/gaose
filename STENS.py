@@ -1,29 +1,9 @@
-from random import random, uniform
-from typing import final
-import numpy as np, numpy.random
-from sklearn.metrics import confusion_matrix, f1_score, accuracy_score
-from copy import deepcopy
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neural_network import MLPClassifier
+import numpy as np
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
-from math import floor
-from scipy import stats
 from optimizers import hill_climbing_optimizer
 from ga_optimizer import GAOptimizer
-
-class MetaClassifier:
-    def __init__(self, n_classes, n_models):
-        self.total_predictions_sum = n_classes * n_models
-
-    def predict(self, X, weights):
-        weighted_prediction = np.array(X).transpose() * np.array(weights)
-        predictions = weighted_prediction * 1/self.total_predictions_sum
-
-        return np.round(predictions)
-
+from meta_classifier import MetaClassifier
 
 class STENS:
     def __init__(self, X, y, models=[], n_classes=1, pop_size=100, learning_rate=0.4, max_epochs=1000, weight_change_function='linear'):
@@ -31,12 +11,8 @@ class STENS:
         self.set_models(models)
         self.n_classes = n_classes
         self.max_epochs = max_epochs
-        self.weights = self.__generate_new_weights()
-        self.meta_model_mlp = MetaClassifier(n_classes, len(self.models))
-        #  MLPClassifier(solver='lbfgs', alpha=0.05, max_iter=1000,
-        #      hidden_layer_sizes=(10,), activation='relu', random_state=1, learning_rate='adaptive')
-
-        return
+        self.weights = None
+        self.meta_classifier = MetaClassifier(n_classes, len(self.models))
 
     # Public
     def print_pop(self):
@@ -49,7 +25,6 @@ class STENS:
     def fit(self, X, y):
         n_models = len(self.models)
         X_train, X_mm, y_train, y_mm = train_test_split(X, y, test_size=0.3)
-        X_mm, X_valid, y_mm, y_valid = train_test_split(X_mm, y_mm, test_size=0.35)
         X_batches = []
         y_batches = []
 
@@ -62,24 +37,16 @@ class STENS:
             y_batches.append(y_train[curr_pos:curr_pos+batch_size])
 
         wl_predictions = []
-        wl_valid_predictions = []
 
         # Train the weak learners and get their predictions on test set
         for i in range(len(self.models)):
             self.models[i].fit(X_batches[i], y_batches[i])
             wl_predictions.append(self.models[i].predict(X_mm) + 1)
-            wl_valid_predictions.append(self.models[i].predict(X_valid) + 1)
 
         # Optimize weights
         ga_optimizer = GAOptimizer(
-            n_models, self.meta_model_mlp, wl_predictions, y_mm, wl_valid_predictions, y_valid,
-            pop_size=30, n_generations=3000)
-        self.weights = ga_optimizer.optimize()
-
-            
-        weighted_wl_predictions = np.array(wl_predictions).transpose() * np.array(self.weights)
-        self.meta_model_mlp.fit(weighted_wl_predictions, y_mm)
-        
+            n_models, pop_size=40, n_generations=3000)
+        self.weights = ga_optimizer.optimize(wl_predictions, y_mm, self.meta_classifier)
 
     def print_weak_learners_performance(self, X, y):
         scores = []
@@ -94,24 +61,10 @@ class STENS:
         for i in range(len(self.models)):
             wl_predictions.append(self.models[i].predict(X) + 1)
 
-        weighted_wl_predictions = np.array(wl_predictions).transpose() * np.array(self.weights)
-
-        return self.meta_model_mlp.predict(weighted_wl_predictions)
+        return self.meta_classifier.predict(wl_predictions, self.weights)
 
     def get_models(self):
         return self.models
 
     def set_models(self, models):
         self.models = models
-
-    # Private
-    def __generate_new_weights(self):
-        n_models = len(self.models)
-
-        weights = []
-        new_weights = np.random.dirichlet(np.ones(n_models),size=1)[0]
-
-        for w in new_weights:
-            weights.append(w)
-
-        return weights
