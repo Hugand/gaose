@@ -70,6 +70,7 @@ def main():
         max_epochs=3000,
         pInstances=0.7,
         pFeatures=0.4,
+        crossover_type='uniform',
     )
 
     stens.fit(X_train, y_train)
@@ -91,18 +92,6 @@ def main():
     print('Ensemble weights: ')
     print(stens.weights)
 
-
-class DimensionalityReducer(BaseEstimator, TransformerMixin):
-    def __init__(self, columns=[]):
-        self.columns = columns
-
-    def transform(self, X, **transform_params):
-        trans = X[self.columns]
-        return trans
-
-    def fit(self, X, y=None, **fit_params):
-        return self
-    
 
 main()
 

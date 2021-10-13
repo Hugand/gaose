@@ -9,7 +9,8 @@ from copy import deepcopy
 
 class STENS:
     def __init__(self, models=[], n_classes=1, pop_size=100,
-        learning_rate=0.4, max_epochs=1000, pInstances=1.0, pFeatures=1.0):
+        learning_rate=0.4, max_epochs=1000, pInstances=1.0, pFeatures=1.0,
+        crossover_type='1pt'):
         self.learning_rate = learning_rate
         self.set_models(models)
         self.n_classes = n_classes
@@ -19,9 +20,8 @@ class STENS:
         self.pInstances = pInstances
         self.pFeatures = pFeatures
         self.selected_features = []
-        self.pop_size = pop_size
-        self.max_epochs = max_epochs
-        self.ga_optimizer = GAOptimizer(len(models), pop_size=self.pop_size, n_generations=self.max_epochs)
+        self.ga_optimizer = GAOptimizer(
+            len(models), pop_size=pop_size, n_generations=max_epochs, crossover_type=crossover_type)
 
     # Public
     def print_pop(self):

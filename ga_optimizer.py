@@ -74,7 +74,26 @@ class GAOptimizer:
         return offspring1, offspring2
 
     def __uniform_crossover(self, chromossome1, chromossome2):
-        return
+        weights_len = len(chromossome1['weights'])
+        chromossome1_weights, chromossome2_weights = chromossome1['weights'], chromossome2['weights']
+        offspring1_weights = []
+        offspring2_weights = []
+
+        for i in range(weights_len):
+            if i % 2 == 0:
+                offspring1_weights.append(chromossome1_weights[i])
+                offspring2_weights.append(chromossome2_weights[i])
+            else:
+                offspring1_weights.append(chromossome2_weights[i])
+                offspring2_weights.append(chromossome1_weights[i])
+
+        offspring1_weights = self.__normalize_weights(offspring1_weights)
+        offspring2_weights = self.__normalize_weights(offspring2_weights)
+
+        offspring1 = { 'weights': offspring1_weights, 'fit': self.__evaluate_chromossome(offspring1_weights) }
+        offspring2 = { 'weights': offspring2_weights, 'fit': self.__evaluate_chromossome(offspring2_weights) }
+
+        return offspring1, offspring2
 
     def optimize(self, X_train, y_train, meta_classifier):
         self.meta_classifier = meta_classifier
