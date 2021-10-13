@@ -11,6 +11,7 @@ from sklearn.svm import SVC
 from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, log_loss, classification_report
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.naive_bayes import GaussianNB
+from copy import deepcopy
 
 def main():
 
@@ -18,45 +19,48 @@ def main():
     # models = pickle.load(open('models.sav', 'rb'))
     #data = pickle.load(open('dataset.sav', 'rb'))
     data = pd.read_csv('dataset.csv')
-    X = data.drop(columns='DEATH_EVENT')
-    y = data.DEATH_EVENT
+    # data = pd.read_csv('../datasets/winequality-red.csv', delimiter=';')
+    y_label = 'DEATH_EVENT' # 'quality'
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-    # , X_train_2, y_train_1, y_train_2 = train_test_split(X_train, y_train, test_size=0.33)
-    # X_train_1, X_train_2, X_train_3 = X_train[:round(len(X_train)/2)], X_train[round(len(X_train)/3):2*round(len(X_train)/3)], X_train[round(len(X_train)/3)*2:]
-    columns_006 = ['age', 'anaemia', 'diabetes', 'ejection_fraction',
-        'high_blood_pressure', 'platelets', 'serum_creatinine', 'serum_sodium',
-        'sex', 'smoking', 'time']
+    X = data.drop(columns=y_label)
+    y = data[y_label]
 
-    columns_003 = ['age', 'anaemia', 'creatinine_phosphokinase', 'diabetes',
-        'ejection_fraction', 'high_blood_pressure', 'platelets',
-        'serum_creatinine', 'serum_sodium', 'sex', 'smoking', 'time']
+    print(data.describe())
 
-    columns_03 = ['ejection_fraction', 'serum_creatinine', 'time']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+    # model = KNeighborsClassifier(n_neighbors=11, weights='distance', p=1)
+    # model_cpy = deepcopy(model)
+
+    # model_cpy.fit(X_train, y_train)
+    # print(accuracy_score(y_test, model_cpy.predict(X_test)))
+    # print(accuracy_score(y_test, model.predict(X_test)))
+
+
 
     pipeline_models = [
         make_pipeline(
-            DimensionalityReducer(columns_03),
+            StandardScaler(),
             DecisionTreeClassifier(criterion='entropy')),
         make_pipeline(
-            DimensionalityReducer(columns_03),
+            StandardScaler(),
             KNeighborsClassifier(
             n_neighbors=11, weights='distance', p=1
         )),
         make_pipeline(
-            DimensionalityReducer(columns_03),
+            StandardScaler(),
             SVC(C=12, kernel='rbf')
         ),
         make_pipeline(
-            DimensionalityReducer(columns_03),
+            StandardScaler(),
             GaussianNB()
         ),
         make_pipeline(
-            DimensionalityReducer(columns_03),
+            StandardScaler(),
             GaussianNB()
         ),
         make_pipeline(
-            DimensionalityReducer(columns_03),
+            StandardScaler(),
             KNeighborsClassifier(
             n_neighbors=5, weights='distance', p=2)
         ),
@@ -75,7 +79,6 @@ def main():
 
     stens.fit(X_train, y_train)
 
-    stens.print_weak_learners_performance(X_test, y_test)
     pred = stens.predict(X_test)
     pred2 = stens.predict(X_train)
 
@@ -83,11 +86,15 @@ def main():
     print("FINAL: " + str(accuracy_score(y_test, pred)))
     
     
-    # print('\nTest set:')
+    print('\nTest set:')
+    stens.print_weak_learners_performance(X_test, y_test)
+    print(stens.weights)
     # print('rf: ' + str(f1_score(y_test, pipeline_models[0].predict(X_test))))
     # print('knn: ' + str(f1_score(y_test, pipeline_models[1].predict(X_test))))
     # print('svm: ' + str(f1_score(y_test, pipeline_models[2].predict(X_test))))
     # print('nb: ' + str(f1_score(y_test, pipeline_models[3].predict(X_test))))
+
+    
     # print(list(pred))
     # print(confusion_matrix(y_test, pred))
 

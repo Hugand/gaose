@@ -59,6 +59,9 @@ class GAOptimizer:
         
         offspring1_weights = chromossome1_weights[:random_pos] + chromossome2_weights[random_pos:]
         offspring2_weights = chromossome2_weights[:random_pos] + chromossome1_weights[random_pos:]
+        offspring1_weights = self.__normalize_weights(offspring1_weights)
+        offspring2_weights = self.__normalize_weights(offspring2_weights)
+
 
         offspring1 = { 'weights': offspring1_weights, 'fit': self.__evaluate_chromossome(offspring1_weights) }
         offspring2 = { 'weights': offspring2_weights, 'fit': self.__evaluate_chromossome(offspring2_weights) }
@@ -87,7 +90,6 @@ class GAOptimizer:
 
             print(g)
             print([p['fit'] for p in self.population])
-            # print('[' + str(g) + '] => ' + str(self.population[0]['weights']) + ' - ' + str(self.population[0]['fit']))
             
         return self.population[0]['weights']
 
