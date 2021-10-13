@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
@@ -21,7 +21,7 @@ def main():
     X = data.drop(columns=y_label)
     y = data[y_label]
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
     pipeline_models = [
         make_pipeline(
@@ -42,25 +42,35 @@ def main():
         ),
         make_pipeline(
             StandardScaler(),
-            GaussianNB()
+            SVC(C=6, kernel='rbf')
+        ),
+        make_pipeline(
+            MinMaxScaler(),
+            SVC()
         ),
         make_pipeline(
             StandardScaler(),
             KNeighborsClassifier(
             n_neighbors=5, weights='distance', p=2)
         ),
+        make_pipeline(
+            StandardScaler(),
+            KNeighborsClassifier(
+            n_neighbors=3, weights='distance', p=1)
+        ),
+        make_pipeline(
+            StandardScaler(),
+            DecisionTreeClassifier(criterion='gini', max_leaf_nodes=20)),
     ]
  
     stens = STENS(
-        X_test, y_test,
         models=pipeline_models,
         n_classes=10,
-        weight_change_function='quadratic',
-        pop_size=30,
-        max_epochs=300
+        pop_size=40,
+        max_epochs=3000,
+        pInstances=0.7,
+        pFeatures=0.4,
     )
-
-    # print(preds)
 
     stens.fit(X_train, y_train)
 
