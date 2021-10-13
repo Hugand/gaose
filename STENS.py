@@ -14,6 +14,17 @@ from scipy import stats
 from optimizers import hill_climbing_optimizer
 from ga_optimizer import GAOptimizer
 
+class MetaClassifier:
+    def __init__(self, n_classes, n_models):
+        self.total_predictions_sum = n_classes * n_models
+
+    def predict(self, X, weights):
+        weighted_prediction = np.array(X).transpose() * np.array(weights)
+        predictions = weighted_prediction * 1/self.total_predictions_sum
+
+        return np.round(predictions)
+
+
 class STENS:
     def __init__(self, X, y, models=[], n_classes=1, pop_size=100, learning_rate=0.4, max_epochs=1000, weight_change_function='linear'):
         self.learning_rate = learning_rate
@@ -21,7 +32,7 @@ class STENS:
         self.n_classes = n_classes
         self.max_epochs = max_epochs
         self.weights = self.__generate_new_weights()
-        self.meta_model_mlp = DecisionTreeClassifier()
+        self.meta_model_mlp = MetaClassifier(n_classes, len(self.models))
         #  MLPClassifier(solver='lbfgs', alpha=0.05, max_iter=1000,
         #      hidden_layer_sizes=(10,), activation='relu', random_state=1, learning_rate='adaptive')
 
