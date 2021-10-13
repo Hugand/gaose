@@ -13,15 +13,15 @@ from sklearn.naive_bayes import GaussianNB
 from copy import deepcopy
 
 def main():
-    # data = pd.read_csv('dataset.csv')
-    data = pd.read_csv('../datasets/winequality-red.csv', delimiter=';')
-    # y_label = 'DEATH_EVENT'
-    y_label = 'quality'
+    data = pd.read_csv('dataset.csv')
+    # data = pd.read_csv('../datasets/winequality-red.csv', delimiter=';')
+    y_label = 'DEATH_EVENT'
+    # y_label = 'quality'
 
     X = data.drop(columns=y_label)
     y = data[y_label]
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
     pipeline_models = [
         make_pipeline(
@@ -52,15 +52,13 @@ def main():
     ]
  
     stens = STENS(
-        X_test, y_test,
         models=pipeline_models,
-        n_classes=10,
-        weight_change_function='quadratic',
+        n_classes=2,
         pop_size=30,
-        max_epochs=300
+        max_epochs=300,
+        pInstances=0.6,
+        pFeatures=0.5,
     )
-
-    # print(preds)
 
     stens.fit(X_train, y_train)
 

@@ -95,7 +95,7 @@ class GAOptimizer:
                         self.population[p], self.population[random_chromossome_pos])
                     mating_pool += offsprings
 
-            if g % 400 == 0:
+            if g % 100 == 0:
                 mating_pool = self.__population_injection(mating_pool, 20)
 
             self.population = self.__select(mating_pool)
