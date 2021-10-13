@@ -9,9 +9,7 @@ def ga_optimizer():
 
 def hill_climbing_optimizer(wl_predictions, y, X_valid, y_valid, meta_model, curr_weights, max_epochs):
     weights = curr_weights
-    curr_fit = accuracy_score(y_valid, meta_model.predict(
-        np.array(X_valid).transpose() * np.array(weights)
-    ))
+    curr_fit = 0
     N_neighbors = 100
     epochs = 0
 
@@ -24,7 +22,7 @@ def hill_climbing_optimizer(wl_predictions, y, X_valid, y_valid, meta_model, cur
         for i in range(N_neighbors):
             meta_model_cpy = deepcopy(meta_model)
             # Change weight
-            weight_change = random() #neighbor_distance
+            weight_change = uniform(0.3, 2.0) #neighbor_distance
             chosen_weight = round(uniform(0, len(weights)-1))
 
             new_weights = deepcopy(weights)
@@ -47,7 +45,7 @@ def hill_climbing_optimizer(wl_predictions, y, X_valid, y_valid, meta_model, cur
 
         neighbors.sort(key=lambda x: x['fit'], reverse=True)
         
-        if neighbors[0]['fit'] > curr_fit:
+        if neighbors[0]['fit'] >= curr_fit:
             weights = neighbors[0]['weights']
             curr_fit = neighbors[0]['fit']
 
@@ -65,6 +63,7 @@ def __normalize_weights(weights):
         normalized_weights.append(w / total)
 
     return normalized_weights
+    
 
 def __calc_weight_change(error):
     wc_function = {

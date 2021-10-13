@@ -12,6 +12,7 @@ from sklearn.tree import DecisionTreeClassifier
 from math import floor
 from scipy import stats
 from optimizers import hill_climbing_optimizer
+from ga_optimizer import GAOptimizer
 
 class STENS:
     def __init__(self, X, y, models=[], n_classes=1, pop_size=100, learning_rate=0.4, max_epochs=1000, weight_change_function='linear'):
@@ -25,8 +26,8 @@ class STENS:
         self.weights = self.__generate_new_weights()
 
         self.meta_model_mlp = DecisionTreeClassifier()
-        # self.meta_model_mlp = MLPClassifier(solver='lbfgs', alpha=0.001, max_iter=500,
-        #     hidden_layer_sizes=(15, 10), random_state=1, learning_rate='adaptive')
+        #  MLPClassifier(solver='lbfgs', alpha=0.05, max_iter=1000,
+        #      hidden_layer_sizes=(10,), activation='relu', random_state=1, learning_rate='adaptive')
 
         return
 
@@ -62,13 +63,22 @@ class STENS:
             wl_predictions.append(self.models[i].predict(X_mm) + 1)
             wl_valid_predictions.append(self.models[i].predict(X_valid) + 1)
 
+        # weighted_wl_predictions = np.array(wl_predictions).transpose() * np.array(self.weights)
+        # self.meta_model_mlp.fit(weighted_wl_predictions, y_mm)
+        
+        # Optimize weights
+        # self.weights = hill_climbing_optimizer(
+        #     wl_predictions, y_mm, wl_valid_predictions, y_valid,
+        #     self.meta_model_mlp, self.weights, self.max_epochs)
+        ga_optimizer = GAOptimizer(
+            n_models, self.meta_model_mlp, wl_predictions, y_mm, wl_valid_predictions, y_valid,
+            pop_size=50)
+        self.weights = ga_optimizer.optimize()
+
+            
         weighted_wl_predictions = np.array(wl_predictions).transpose() * np.array(self.weights)
         self.meta_model_mlp.fit(weighted_wl_predictions, y_mm)
         
-        # Optimize weights
-        self.weights = hill_climbing_optimizer(
-            wl_predictions, y_mm, wl_valid_predictions, y_valid,
-            self.meta_model_mlp, self.weights, self.max_epochs)
 
     def print_weak_learners_performance(self, X, y):
         scores = []

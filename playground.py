@@ -51,22 +51,22 @@ def main():
             DimensionalityReducer(columns_03),
             GaussianNB()
         ),
-        # make_pipeline(
-        #     DimensionalityReducer(columns_03),
-        #     GaussianNB()
-        # ),
-        # make_pipeline(
-        #     DimensionalityReducer(columns_03),
-        #     KNeighborsClassifier(
-        #     n_neighbors=5, weights='distance', p=2)
-        # ),
+        make_pipeline(
+            DimensionalityReducer(columns_03),
+            GaussianNB()
+        ),
+        make_pipeline(
+            DimensionalityReducer(columns_03),
+            KNeighborsClassifier(
+            n_neighbors=5, weights='distance', p=2)
+        ),
     ]
  
     stens = STENS(
         X_test, y_test,
         models=pipeline_models,
         n_classes=2,
-        weight_change_function='linear',
+        weight_change_function='quadratic',
         pop_size=30,
         max_epochs=300
     )
