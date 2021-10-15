@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 from optimizers import hill_climbing_optimizer
 from ga_optimizer import GAOptimizer
@@ -10,7 +10,7 @@ from copy import deepcopy
 class STENS:
     def __init__(self, models=[], n_classes=1, pop_size=100,
         learning_rate=0.4, max_epochs=1000, pInstances=1.0, pFeatures=1.0,
-        crossover_type='1pt'):
+        crossover_type='1pt', eval_metric='accuracy'):
         self.learning_rate = learning_rate
         self.models = models
         self.n_classes = n_classes
@@ -20,8 +20,11 @@ class STENS:
         self.pInstances = pInstances
         self.pFeatures = pFeatures
         self.selected_features = []
+        self.eval_metric = eval_metric
         self.ga_optimizer = GAOptimizer(
-            len(models), pop_size=pop_size, n_generations=max_epochs, crossover_type=crossover_type)
+            len(models), pop_size=pop_size,
+            n_generations=max_epochs, crossover_type=crossover_type,
+            poison_prob=0.2, best_fit_frac=0.1, eval_metric=eval_metric)
 
     # Public
     def print_pop(self):
@@ -82,4 +85,9 @@ class STENS:
 
     def get_models(self):
         return self.models
-        
+
+    def __eval_performance(self, y_true, y_pred):
+        if(self.eval_metric == 'accuracy'):
+            return accuracy_score(y_true, y_pred)
+        elif(self.eval_metric == 'f1-score'):
+            return f1_score(y_true, y_pred, average='weighted')

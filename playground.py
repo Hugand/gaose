@@ -16,24 +16,22 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import LabelEncoder, OrdinalEncoder, OneHotEncoder
 
 def main():
-    # data = pd.read_csv('dataset.csv')
+    data = pd.read_csv('dataset.csv')
     # data = pd.read_csv('../datasets/winequality-red.csv', delimiter=';')
-    data = pd.read_csv('../datasets/adult.data', delimiter=',')
-    # y_label = 'DEATH_EVENT'
-    # y_label = 'class
-    y_label = 'classif'
+    # data = pd.read_csv('../datasets/adult.data', delimiter=',')
+    y_label = 'DEATH_EVENT'
+    # y_label = 'quality'
+    # y_label = 'classif'
 
-    categorical = ['workclass', 'education', 'marital_status', 'sex', 'native_country',
-        'classif', 'occupation', 'relationship', 'race']
+    # categorical = ['workclass', 'education', 'marital_status', 'sex', 'native_country',
+    #     'classif', 'occupation', 'relationship', 'race']
 
-    encoder = OrdinalEncoder()
-    mf_imputer = SimpleImputer(strategy='most_frequent')
-    mean_imputer = SimpleImputer(strategy='most_frequent')
-    data[categorical] = encoder.fit_transform(data[categorical])
-    data[categorical] = mf_imputer.fit_transform(data[categorical])
-    data[data.columns] = mean_imputer.fit_transform(data[data.columns])
-
-    print(data.head())
+    # encoder = OrdinalEncoder()
+    # mf_imputer = SimpleImputer(strategy='most_frequent')
+    # mean_imputer = SimpleImputer(strategy='most_frequent')
+    # data[categorical] = encoder.fit_transform(data[categorical])
+    # data[categorical] = mf_imputer.fit_transform(data[categorical])
+    # data[data.columns] = mean_imputer.fit_transform(data[data.columns])
 
     X = data.drop(columns=y_label)
     y = data[y_label]
@@ -88,6 +86,7 @@ def main():
         pInstances=0.4,
         pFeatures=0.3,
         crossover_type='uniform',
+        eval_metric='f1-score'
     )
 
     stens.fit(X_train, y_train)
@@ -95,12 +94,10 @@ def main():
     pred_test = stens.predict(X_test)
     pred_train = stens.predict(X_train)
 
-    print(pred_test)
-    print(y_test)
-
     print("FINAL train: " + str(accuracy_score(y_train, pred_train)))
     print("FINAL test: " + str(accuracy_score(y_test, pred_test)))
-    # print("FINAL test f1: " + str(f1_score(y_test, pred_test)))
+    print("FINAL test f1: " + str(f1_score(y_test, pred_test, average='micro')))
+    print("FINAL test f1: " + str(f1_score(y_test, pred_test, average='weighted')))
     print(confusion_matrix(y_test, pred_test))
     
     print('\nTest set:')
