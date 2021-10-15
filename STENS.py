@@ -71,7 +71,7 @@ class STENS:
     def print_weak_learners_performance(self, X, y):
         scores = []
         for i in range(len(self.models)):
-            scores.append(accuracy_score(y, self.models[i].predict(X[self.selected_features[i]])))
+            scores.append(self.__eval_performance(y, self.models[i].predict(X[self.selected_features[i]])))
 
         print(scores)
     

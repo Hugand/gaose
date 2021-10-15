@@ -52,7 +52,7 @@ class GAOptimizer:
         chosen_weight = round(uniform(0, len(chromossome['weights'])-1))
 
         new_weights = deepcopy(chromossome['weights'])
-        new_weights[chosen_weight] = new_weights[chosen_weight] + weight_change
+        new_weights[chosen_weight] = abs(new_weights[chosen_weight] + weight_change)
         normalized_weights = self.__normalize_weights(new_weights)
 
         return self.__create_chromossome(normalized_weights)

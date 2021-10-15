@@ -85,7 +85,7 @@ def main():
         max_epochs=3000,
         pInstances=0.4,
         pFeatures=0.3,
-        crossover_type='uniform',
+        crossover_type='1pt',
         eval_metric='f1-score'
     )
 
