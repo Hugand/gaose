@@ -12,7 +12,7 @@ class STENS:
         learning_rate=0.4, max_epochs=1000, pInstances=1.0, pFeatures=1.0,
         crossover_type='1pt'):
         self.learning_rate = learning_rate
-        self.set_models(models)
+        self.models = models
         self.n_classes = n_classes
         self.max_epochs = max_epochs
         self.weights = None
@@ -82,6 +82,4 @@ class STENS:
 
     def get_models(self):
         return self.models
-
-    def set_models(self, models):
-        self.models = models
+        

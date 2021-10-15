@@ -1,6 +1,7 @@
 from STENS import STENS
 import pickle
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
@@ -11,12 +12,28 @@ from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, log_loss
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.naive_bayes import GaussianNB
 from copy import deepcopy
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder, OrdinalEncoder, OneHotEncoder
 
 def main():
     # data = pd.read_csv('dataset.csv')
-    data = pd.read_csv('../datasets/winequality-red.csv', delimiter=';')
+    # data = pd.read_csv('../datasets/winequality-red.csv', delimiter=';')
+    data = pd.read_csv('../datasets/adult.data', delimiter=',')
     # y_label = 'DEATH_EVENT'
-    y_label = 'quality'
+    # y_label = 'class
+    y_label = 'classif'
+
+    categorical = ['workclass', 'education', 'marital_status', 'sex', 'native_country',
+        'classif', 'occupation', 'relationship', 'race']
+
+    encoder = OrdinalEncoder()
+    mf_imputer = SimpleImputer(strategy='most_frequent')
+    mean_imputer = SimpleImputer(strategy='most_frequent')
+    data[categorical] = encoder.fit_transform(data[categorical])
+    data[categorical] = mf_imputer.fit_transform(data[categorical])
+    data[data.columns] = mean_imputer.fit_transform(data[data.columns])
+
+    print(data.head())
 
     X = data.drop(columns=y_label)
     y = data[y_label]
@@ -65,11 +82,11 @@ def main():
  
     stens = STENS(
         models=pipeline_models,
-        n_classes=10,
+        n_classes=2,
         pop_size=40,
         max_epochs=3000,
-        pInstances=0.7,
-        pFeatures=0.4,
+        pInstances=0.4,
+        pFeatures=0.3,
         crossover_type='uniform',
     )
 

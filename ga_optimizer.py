@@ -9,7 +9,7 @@ class GAOptimizer:
         n_generations=1000, pop_size=30,
         mutation_prob=0.1,
         crossover_prob=0.7, crossover_type='1pt',
-        selection_type='tournment'):
+        selection_type='tournment', best_fit_frac=0.05):
         self.pop_size = pop_size
         self.mutation_prob = mutation_prob
         self.crossover_prob = crossover_prob
@@ -18,14 +18,15 @@ class GAOptimizer:
         self.population = []
         self.n_generations = n_generations
         self.crossover_type = crossover_type
+        self.best_fit_size = round(self.pop_size * best_fit_frac)
 
-    def __select(self, mating_pool):
-        return self.__tournment_selection(mating_pool)
+    def __select(self, mating_pool, selected_size):
+        return self.__tournment_selection(mating_pool, selected_size)
 
-    def __tournment_selection(self, mating_pool):
+    def __tournment_selection(self, mating_pool, selected_size):
         selected = []
 
-        for i in range(self.pop_size):
+        for i in range(selected_size):
             random_pos_1 = round(uniform(0, len(mating_pool)-1))
             random_pos_2 = round(uniform(0, len(mating_pool)-1))
 
@@ -100,9 +101,17 @@ class GAOptimizer:
         self.X_train = X_train
         self.y_train = y_train
         self.population = self.__generate_population(self.pop_size)
+        best_fit = []
 
         for g in range(self.n_generations):
             mating_pool = []
+
+            self.population.sort(key=lambda x: x['fit'], reverse=True)
+            print(str(g) + ' - ' + str(len(self.population)))
+            print([p['fit'] for p in self.population])
+
+            best_fit = self.population[:self.best_fit_size]
+
             for p in range(self.pop_size):
                 if random() <= self.mutation_prob:
                     mutant = self.__mutate(self.population[p])
@@ -117,11 +126,8 @@ class GAOptimizer:
             if g % 100 == 0:
                 mating_pool = self.__population_injection(mating_pool, 20)
 
-            self.population = self.__select(mating_pool)
-            self.population.sort(key=lambda x: x['fit'], reverse=True)
-
-            print(g)
-            print([p['fit'] for p in self.population])
+            self.population = best_fit
+            self.population += self.__select(mating_pool, self.pop_size - self.best_fit_size)
             
         return self.population[0]['weights']
 
