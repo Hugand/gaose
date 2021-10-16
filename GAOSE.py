@@ -7,7 +7,7 @@ from meta_classifier import MetaClassifier
 import pandas as pd
 from copy import deepcopy
 
-class GAOSL:
+class GAOSE:
     def __init__(self, models=[], n_classes=1, pop_size=100,
         learning_rate=0.4, max_epochs=1000, pInstances=1.0, pFeatures=1.0,
         crossover_type='1pt', eval_metric='accuracy'):

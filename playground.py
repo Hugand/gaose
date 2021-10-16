@@ -1,4 +1,4 @@
-from GAOSL import GAOSL
+from GAOSE import GAOSE
 import pickle
 import pandas as pd
 import numpy as np
@@ -78,7 +78,7 @@ def main():
             DecisionTreeClassifier(criterion='gini', max_leaf_nodes=20)),
     ]
  
-    gaosl = GAOSL(
+    gaose = GAOSE(
         models=pipeline_models,
         n_classes=2,
         pop_size=40,
@@ -89,10 +89,10 @@ def main():
         eval_metric='f1-score'
     )
 
-    gaosl.fit(X_train, y_train)
+    gaose.fit(X_train, y_train)
 
-    pred_test = gaosl.predict(X_test)
-    pred_train = gaosl.predict(X_train)
+    pred_test = gaose.predict(X_test)
+    pred_train = gaose.predict(X_train)
 
     print("FINAL train: " + str(accuracy_score(y_train, pred_train)))
     print("FINAL test: " + str(accuracy_score(y_test, pred_test)))
@@ -102,9 +102,9 @@ def main():
     
     print('\nTest set:')
     print('Learners perfomance: ')
-    gaosl.print_weak_learners_performance(X_test, y_test)
+    gaose.print_weak_learners_performance(X_test, y_test)
     print('Ensemble weights: ')
-    print(gaosl.weights)
+    print(gaose.weights)
 
 
 main()

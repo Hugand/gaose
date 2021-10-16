@@ -1,4 +1,4 @@
-# Genetic Algorithm Optimized Stacking Ensemble (GAOSL)
+# Genetic Algorithm Optimized Stacking Ensemble (GAOSE)
 
 ## Introduction
 This project implements a Stacking Ensemble that stacks different Machine Learning (ML) models in order to make better predictions. For each weak learner model there is a weight attributed, which will affect the importance of that model's predictions on the final one. It is used a Genetic Algorithm (GA) to find the optimal weights that gives the best predictions. The final predictions are then given by a Meta Classifier (MC).
