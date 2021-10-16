@@ -6,14 +6,18 @@ class MetaClassifier:
         self.prediction_type = prediction_type
 
     def predict(self, X, weights):
-        weighted_prediction = np.array(weights) * np.array(X).transpose()
-        prediction_methods = {
-            'mean': self.__mean_prediction,
-        }
+        weighted_prediction = np.array(weights) * np.array(X).T
+        # prediction_methods = {
+        #     'mean': self.__mean_prediction,
+        # }
 
         return self.__mean_prediction(weighted_prediction, weights)
 
     def __mean_prediction(self, weighted_prediction, weights):
-        predictions = sum(weighted_prediction.transpose()) #* 1/sum(weights)
+        transposed_weighted_predictions = weighted_prediction.T
+        predictions = np.dot(
+            np.ones((1, len(transposed_weighted_predictions))),
+            transposed_weighted_predictions
+        )[0]
 
-        return np.round(predictions).transpose() - 1
+        return np.round(predictions) - 1

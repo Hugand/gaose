@@ -136,10 +136,13 @@ class GAOptimizer:
             mating_pool = self.__apply_genetic_operators()
 
             if g % 150 == 0:
-                mating_pool += self.__population_injection(mating_pool, 50)
+                new_batch = self.__population_injection(mating_pool, 50)
+                new_batch.sort(key=lambda x: x['fit'], reverse=True)
+
+                best_fit += new_batch[:2]
 
             self.population = best_fit
-            self.population += self.__select(mating_pool, self.pop_size - self.best_fit_size)
+            self.population += self.__select(mating_pool, self.pop_size - len(best_fit))
             
         return self.population[0]['weights']
 

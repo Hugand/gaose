@@ -81,28 +81,31 @@ def main():
     gaose = GAOSE(
         models=pipeline_models,
         n_classes=2,
-        pop_size=40,
-        max_epochs=3000,
         pInstances=0.4,
         pFeatures=0.3,
-        crossover_type='1pt',
         eval_metric='f1-score'
     )
 
-    gaose.fit(X_train, y_train)
+    gaose.fit(
+        X_train, y_train,
+        holdout_frac=0.4,
+        pop_size=30,
+        max_epochs=3000,
+        best_fit_frac=0.1, mutation_prob=0.3,
+        crossover_type='1pt')
 
     pred_test = gaose.predict(X_test)
     pred_train = gaose.predict(X_train)
 
     print("FINAL train: " + str(accuracy_score(y_train, pred_train)))
     print("FINAL test: " + str(accuracy_score(y_test, pred_test)))
-    print("FINAL test f1: " + str(f1_score(y_test, pred_test, average='micro')))
+    print("FINAL train f1: " + str(f1_score(y_train, pred_train, average='weighted')))
     print("FINAL test f1: " + str(f1_score(y_test, pred_test, average='weighted')))
     print(confusion_matrix(y_test, pred_test))
     
     print('\nTest set:')
     print('Learners perfomance: ')
-    gaose.print_weak_learners_performance(X_test, y_test)
+    print(gaose.get_weak_learners_performance(X_test, y_test))
     print('Ensemble weights: ')
     print(gaose.weights)
 
