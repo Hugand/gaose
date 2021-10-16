@@ -48,7 +48,7 @@ class GAOptimizer:
         return selected
     
     def __mutate(self, chromossome):
-        weight_change = uniform(0.3, 2.0) * [1, -1][round(random())]
+        weight_change = uniform(0, 1.0) * [1, -1][round(random())]
         chosen_weight = round(uniform(0, len(chromossome['weights'])-1))
 
         new_weights = deepcopy(chromossome['weights'])
@@ -136,7 +136,7 @@ class GAOptimizer:
             mating_pool = self.__apply_genetic_operators()
 
             if g % 150 == 0:
-                mating_pool = self.__population_injection(mating_pool, 30)
+                mating_pool += self.__population_injection(mating_pool, 50)
 
             self.population = best_fit
             self.population += self.__select(mating_pool, self.pop_size - self.best_fit_size)

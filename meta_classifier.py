@@ -14,6 +14,6 @@ class MetaClassifier:
         return self.__mean_prediction(weighted_prediction, weights)
 
     def __mean_prediction(self, weighted_prediction, weights):
-        predictions = sum(weighted_prediction.transpose()) * 1/sum(weights)
+        predictions = sum(weighted_prediction.transpose()) #* 1/sum(weights)
 
         return np.round(predictions).transpose() - 1

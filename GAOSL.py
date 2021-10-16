@@ -7,7 +7,7 @@ from meta_classifier import MetaClassifier
 import pandas as pd
 from copy import deepcopy
 
-class STENS:
+class GAOSL:
     def __init__(self, models=[], n_classes=1, pop_size=100,
         learning_rate=0.4, max_epochs=1000, pInstances=1.0, pFeatures=1.0,
         crossover_type='1pt', eval_metric='accuracy'):
@@ -62,7 +62,7 @@ class STENS:
             X_inst_sampled, y_inst_sampled = self.__sample_data(X_train, y_train)
             self.models[i].fit(X_inst_sampled, y_inst_sampled)
             self.selected_features.append(list(X_inst_sampled.columns))
-            print(X_mm[self.selected_features[i]].head())
+            print(len(X_inst_sampled))
             wl_predictions.append(self.models[i].predict(X_mm[self.selected_features[i]]) + 1)
 
         # Optimize weights
