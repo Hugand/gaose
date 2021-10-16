@@ -8,24 +8,16 @@ import pandas as pd
 from copy import deepcopy
 
 class GAOSE:
-    def __init__(self, models=[], n_classes=1, pop_size=100,
-        learning_rate=0.4, max_epochs=1000, pInstances=1.0, pFeatures=1.0,
-        crossover_type='1pt', eval_metric='accuracy'):
-        self.learning_rate = learning_rate
+    def __init__(self, models=[], n_classes=1, pInstances=1.0, pFeatures=1.0, eval_metric='accuracy'):
         self.models = models
         self.n_classes = n_classes
-        self.max_epochs = max_epochs
         self.weights = None
         self.meta_classifier = MetaClassifier(n_classes, len(self.models))
         self.pInstances = pInstances
         self.pFeatures = pFeatures
         self.selected_features = []
         self.eval_metric = eval_metric
-        self.ga_optimizer = GAOptimizer(
-            len(models), pop_size=pop_size,
-            n_generations=max_epochs, crossover_type=crossover_type,
-            poison_prob=0.2, best_fit_frac=0.1, eval_metric=eval_metric)
-
+        
     # Public
     def print_pop(self):
         fits = []
@@ -51,9 +43,21 @@ class GAOSE:
 
         return X_inst_sampled, y_inst_sampled
 
-    def fit(self, X, y):
+    def fit(self, X, y,
+        pop_size=30, max_epochs=1000,
+        mutation_prob=0.1,
+        crossover_prob=0.7, crossover_type='1pt',
+        selection_type='tournment', best_fit_frac=0.05, poison_prob=0.3,):
         n_models = len(self.models)
-        X_train, X_mm, y_train, y_mm = train_test_split(X, y, test_size=0.3)
+        ga_optimizer = GAOptimizer(
+            n_models, pop_size=pop_size,
+            mutation_prob=mutation_prob,
+            crossover_prob=crossover_prob,
+            n_generations=max_epochs, crossover_type=crossover_type,
+            selection_type=selection_type,
+            poison_prob=poison_prob, best_fit_frac=best_fit_frac, eval_metric=self.eval_metric)
+
+        X_train, X_mm, y_train, y_mm = train_test_split(X, y, test_size=0.5)
         wl_predictions = []
         self.selected_features = []
 
@@ -62,11 +66,10 @@ class GAOSE:
             X_inst_sampled, y_inst_sampled = self.__sample_data(X_train, y_train)
             self.models[i].fit(X_inst_sampled, y_inst_sampled)
             self.selected_features.append(list(X_inst_sampled.columns))
-            print(len(X_inst_sampled))
             wl_predictions.append(self.models[i].predict(X_mm[self.selected_features[i]]) + 1)
 
         # Optimize weights
-        self.weights = self.ga_optimizer.optimize(wl_predictions, y_mm, self.meta_classifier)
+        self.weights = ga_optimizer.optimize(wl_predictions, y_mm, self.meta_classifier)
 
     def print_weak_learners_performance(self, X, y):
         scores = []
