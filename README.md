@@ -14,12 +14,12 @@ The predictions matrix (_P_) contains every the predictions made by each model a
 The weighted predictions are calculated by multiplying each weight by the prediction made by its corresponding model.
 <br/>
 
-![ensemble representation](readme_imgs/wp_formulas.png "WP formulas")
+![wp_formulas](readme_imgs/wp_formulas.png "WP formulas")
 
 ## 3 - Calculate the Final Predictions (FP)
 This final prediction is the result that is returned by the ensemble. Ensentially, the weighted predictions of each model are summed which will return _1xy_ matrix with the final predictions. Since the total sum of the weights is always 1, it isn't necessary to calculate a weighted average. Finally, since a prediction is a natural number, the final results should be rounded.
 
-![ensemble representation](readme_imgs/fp_formula.png "FP formula")
+![fp_formula](readme_imgs/fp_formula.png "FP formula")
 
 ## 4 - Weights optimization
 The mathematical formulas of how each prediction is calculated are covered, but how does the ensemble find the optimal weights' distribution? The answer is using a Genetic Algorithm (GA).<br/>
